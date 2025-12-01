@@ -280,7 +280,7 @@
   .heart { transition: 0.5s; }
   .heart.fade { opacity: 0; transform: scale(2); filter:grayscale(1); }
 
-  /* MOBILE CONTROLS */
+  /* MOBILE FIRE BUTTON */
   #fireBtn {
     position: absolute; right:24px; bottom:34px; width:84px; height:84px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; pointer-events:auto;
@@ -291,6 +291,47 @@
   #fireBtn.visible{display:flex;}
   #fireBtn:active{background:rgba(255,255,255,0.2); border-color:var(--neon1); box-shadow:0 0 20px var(--neon1);}
   
+  /* 🎮 NEW MOBILE D-PAD STYLES */
+  #dPad {
+      position: absolute; left: 24px; bottom: 34px;
+      width: 120px; height: 120px;
+      display: none; /* Default hidden on desktop */
+      flex-wrap: wrap;
+      pointer-events: auto;
+      z-index: 8;
+  }
+  .dpad-btn {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      box-sizing: border-box;
+      color: var(--neon1);
+      font-size: 20px;
+      cursor: pointer;
+      touch-action: manipulation;
+  }
+  .dpad-btn:active {
+      background: rgba(255,255,255,0.2); 
+      border-color: var(--neon1); 
+      box-shadow: 0 0 10px var(--neon1);
+  }
+  #upBtn { grid-area: up; margin: 0 40px; }
+  #leftBtn { grid-area: left; }
+  #rightBtn { grid-area: right; }
+  #center { grid-area: center; background: rgba(0,0,0,0.5); border: none; }
+  
+  #dPad {
+      display: grid;
+      grid-template-areas:
+          ". up ."
+          "left center right"
+          ". thrust .";
+      grid-template-columns: 40px 40px 40px;
+      grid-template-rows: 40px 40px 40px;
+  }
+  #thrustBtn { grid-area: thrust; margin: 0 40px; border-radius: 5px; }
+
   @media (max-width:720px){
     h1.title{font-size:36px;}
     .glitch-text{font-size:30px;}
@@ -306,6 +347,8 @@
     .btn-reset, #confirmResetBtn, #cancelResetBtn { font-size: 14px; padding: 10px 20px; }
     .popup-details-container { max-width: 90%; padding: 10px 10px 20px 10px; }
     .popup-details-container h3 { font-size: 18px; }
+    
+    #dPad.visible, #fireBtn.visible { display: flex; } /* Show mobile controls */
   }
 </style>
 </head>
@@ -356,8 +399,15 @@
     
     <button class="btn" id="endScreenRetryBtn"><span class="btn-text">RETRY MISSION</span></button>
   </div>
+  
   <div id="fireBtn"><div style="width:40px;height:40px;background:var(--neon1);border-radius:50%;box-shadow:0 0 10px var(--neon1);pointer-events:none;"></div></div>
-</div>
+  
+  <div id="dPad">
+    <div class="dpad-btn" id="upBtn">A</div> <div class="dpad-btn" id="leftBtn">⮜</div>
+    <div class="dpad-btn" id="center"></div>
+    <div class="dpad-btn" id="rightBtn">⮞</div>
+    <div class="dpad-btn" id="thrustBtn">🚀</div> </div>
+  </div>
 
 <script>
 (() => {
@@ -387,6 +437,12 @@
   const confirmResetBtn = document.getElementById('confirmResetBtn'); 
   const cancelResetBtn = document.getElementById('cancelResetBtn');   
   const closePopupBtn = document.getElementById('closePopupBtn'); 
+  
+  // 🎮 New D-Pad Refs
+  const dPad = document.getElementById('dPad');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+  const thrustBtn = document.getElementById('thrustBtn');
 
   // Game Vars
   let W, H;
@@ -402,7 +458,7 @@
   // Input
   let input = {left:false, right:false, thrust:false, fire:false};
   let mouse = {x:0, y:0, active:false, down:false}; 
-  let touchAim = null;
+  // ❌ REMOVED: let touchAim = null;
   let autoFire = false;
 
   // Objects
@@ -424,8 +480,14 @@
     canvas.width = W;
     canvas.height = H;
     initStars();
-    if(W < 768) fireBtn.classList.add('visible');
-    else fireBtn.classList.remove('visible');
+    if(W < 720) {
+      fireBtn.classList.add('visible');
+      dPad.classList.add('visible'); // Show D-Pad
+    }
+    else {
+      fireBtn.classList.remove('visible');
+      dPad.classList.remove('visible'); // Hide D-Pad
+    }
   }
   window.addEventListener('resize', resize);
   
@@ -450,21 +512,20 @@
       this.invuln = 0;
     }
     update(dt){
-      // Aim
-      let tx = mouse.active ? mouse.x : (touchAim ? touchAim.x : null);
-      let ty = mouse.active ? mouse.y : (touchAim ? touchAim.y : null);
+      // Aim (PC only: Mouse aiming is maintained)
+      let tx = mouse.active ? mouse.x : null;
+      let ty = mouse.active ? mouse.y : null;
       
       if(tx !== null){
         this.angle = Math.atan2(ty - this.y, tx - this.x);
       } else {
+        // Mobile/PC rotation with D-pad/keys
         if(input.left) this.angle -= 4.5 * dt;
         if(input.right) this.angle += 4.5 * dt;
       }
 
-      // 🔄 MOBILE THRUST FIX APPLIED HERE
-      const isThrusting = input.thrust || (touchAim !== null);
-      
-      if(isThrusting){
+      // Thrust (Controlled by input.thrust, set by W/Up/ThrustBtn)
+      if(input.thrust){ // 🚀 Check if thrust is active
         const force = 240 * dt * shipSpeedMultiplier;
         this.vel.x += Math.cos(this.angle) * force;
         this.vel.y += Math.sin(this.angle) * force;
@@ -772,8 +833,9 @@
 
             <h3>MOBILE CONTROLS</h3>
             <ul style="list-style:disc; margin-left:20px;">
-                <li class="level-info"><b>AIM & THRUST:</b> Touch/Drag on screen.</li>
-                <li class="level-info"><b>FIRE:</b> Tap bottom-right button.</li>
+                <li class="level-info"><b>MOVEMENT & ROTATION:</b> Use the D-Pad/Joystick on the bottom-left.</li>
+                <li class="level-info"><b>THRUST:</b> Use the '🚀' button on the D-Pad.</li>
+                <li class="level-info"><b>FIRE:</b> Tap the circular button on the bottom-right.</li>
             </ul>
         </div>
     `;
@@ -963,49 +1025,30 @@
   window.addEventListener('mousedown', ()=>mouse.down=true);
   window.addEventListener('mouseup', ()=>mouse.down=false);
 
-  // 🚀 FIXED MOBILE TOUCH LISTENERS
-  canvas.addEventListener('touchstart', e=>{
-    e.preventDefault();
-    for(let t of e.changedTouches){
-      // 1. If touchAim is NOT set, or if the current touch is the primary one, 
-      // set/update the touchAim (this handles movement/thrust)
-      if(!touchAim || (touchAim && t.identifier === touchAim.id)) {
-          touchAim = {id:t.identifier, x:t.clientX, y:t.clientY};
-      }
-      // 2. If it's a second touch, treat it as a trigger (fire)
-      else if (touchAim && t.identifier !== touchAim.id) {
-          input.fire = true;
-          autoFire = true; 
-      }
-    }
-  }, {passive:false});
+  // ❌ REMOVED: All touch event listeners for canvas aiming/thrust.
+
+  // 🎮 NEW D-PAD LISTENERS
+
+  const handleDpadInput = (flag, state) => {
+    return (e) => {
+      e.preventDefault();
+      input[flag] = state;
+    };
+  };
+
+  // Rotation Buttons
+  leftBtn.addEventListener('touchstart', handleDpadInput('left', true), {passive: false});
+  leftBtn.addEventListener('touchend', handleDpadInput('left', false), {passive: false});
+  rightBtn.addEventListener('touchstart', handleDpadInput('right', true), {passive: false});
+  rightBtn.addEventListener('touchend', handleDpadInput('right', false), {passive: false});
+
+  // Thrust Button (Up)
+  thrustBtn.addEventListener('touchstart', handleDpadInput('thrust', true), {passive: false});
+  thrustBtn.addEventListener('touchend', handleDpadInput('thrust', false), {passive: false});
   
-  canvas.addEventListener('touchmove', e=>{
-    e.preventDefault();
-    for(let t of e.changedTouches){
-      if(touchAim && t.identifier===touchAim.id){ 
-          touchAim.x=t.clientX; 
-          touchAim.y=t.clientY; // Fix: ensure y-coordinate is also updated
-      }
-    }
-  }, {passive:false});
-  
-  canvas.addEventListener('touchend', e=>{
-    e.preventDefault();
-    for(let t of e.changedTouches){
-      if(touchAim && t.identifier===touchAim.id) {
-          touchAim=null; // Stop movement/thrust
-      }
-      else {
-          input.fire=false;
-          autoFire=false; // Stop autofire if the second touch is released
-      }
-    }
-  }, {passive:false});
-  // ------------------------------------
-  
-  fireBtn.addEventListener('touchstart', (e)=>{e.preventDefault(); input.fire=true;});
-  fireBtn.addEventListener('touchend', (e)=>{e.preventDefault(); input.fire=false;});
+  // Fire Button (Right)
+  fireBtn.addEventListener('touchstart', (e)=>{e.preventDefault(); input.fire=true; autoFire=true;}, {passive: false});
+  fireBtn.addEventListener('touchend', (e)=>{e.preventDefault(); input.fire=false; autoFire=false;}, {passive: false});
   fireBtn.addEventListener('mousedown', ()=>{input.fire=true;});
   fireBtn.addEventListener('mouseup', ()=>{input.fire=false;});
 
