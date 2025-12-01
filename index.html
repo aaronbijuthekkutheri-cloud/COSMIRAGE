@@ -22,6 +22,13 @@
   
   #gameWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
   
+  /* --- AIMING CURSOR STYLE --- */
+  #gameWrap.aiming-cursor {
+    /* Create a small, cyan, persistent dot crosshair */
+    /* 1x1 transparent dot with a small cyan shadow/glow */
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewport='0 0 16 16'><circle cx='8' cy='8' r='2' fill='%237ef2ea' style='filter:drop-shadow(0 0 4px %237ef2ea)' /></svg>") 8 8, crosshair !important;
+  }
+  
   canvas{
     display:block;
     background: radial-gradient(circle at center, #111 0%, #000 100%);
@@ -416,10 +423,11 @@
     <div id="joyBase"></div>
     <div id="joyStick"></div>
   </div>
-  </div>
+</div>
 
 <script>
 (() => {
+  const gameWrap = document.getElementById('gameWrap'); // Get gameWrap for cursor change
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d', { alpha: false }); 
   
@@ -727,6 +735,9 @@
     scoreEl.textContent = 0; livesEl.textContent = 3;
     bullets = []; particles = [];
     
+    // Set custom cursor for aiming
+    gameWrap.classList.add('aiming-cursor');
+
     titleScreen.classList.add('hidden');
     endScreen.classList.add('hidden');
     hud.classList.add('active');
@@ -815,7 +826,8 @@
   // --- POPUP MENU FUNCTIONS ---
 
   function showAbout(){
-    // UPDATED: Now includes the Title with class popup-title-text
+    // Remove custom cursor when viewing menus
+    gameWrap.classList.remove('aiming-cursor');
     const content = `
         <div class="popup-title-text">ABOUT GAME</div>
         <div class="popup-details-container">
@@ -846,6 +858,8 @@
   }
 
   function showControls(){
+    // Remove custom cursor when viewing menus
+    gameWrap.classList.remove('aiming-cursor');
     const fullHTML = `
         <div class="popup-title-text">CONTROLS</div>
         <div class="popup-details-container">
@@ -878,10 +892,14 @@
   function closeInfoPopup(){
       popupScreen.classList.add('hidden');
       titleScreen.classList.remove('hidden');
+      // Remove custom cursor when entering menu
+      gameWrap.classList.remove('aiming-cursor');
       gameState = 'MENU';
   }
   
   function showResetConfirm(){
+    // Remove custom cursor when resetting data
+    gameWrap.classList.remove('aiming-cursor');
     titleScreen.classList.add('hidden');
     showPopup(
         "WARNING: DATA ERASE", 
@@ -912,6 +930,9 @@
   function showEndScreen(){
     gameState = 'ENDSCREEN';
     hud.classList.remove('active');
+    
+    // Remove custom cursor when game ends
+    gameWrap.classList.remove('aiming-cursor');
     
     const newBest = score > bestScore;
     if(newBest){
@@ -1004,8 +1025,8 @@
              return; 
           }
         }
-
-        // Level Clear
+        
+        // Level Clear Check
         if(asteroids.length === 0){
           level++; 
           bullets = [];
@@ -1013,22 +1034,28 @@
           gameState = 'TRANSITION'; 
           
           const { count, speedMult, shipMult } = getLevelParameters(level);
+          const DISPLAY_ASTEROID_SPEED = speedMult.toFixed(2);
+          const DISPLAY_SHIP_SPEED = shipMult.toFixed(2);
 
           const popupHTML = `
               <div class="level-info">ASTEROIDS: ${count}</div>
-              <div class="level-info">ASTEROID VELOCITY: ${speedMult.toFixed(2)}x</div>
-              <div class="level-info">QUANTUM THRUSTERS RECALIBRATED -> INTERCEPTOR VELOCITY: ${shipMult.toFixed(2)}x</div>
+              <div class="level-info">ASTEROID VELOCITY: ${DISPLAY_ASTEROID_SPEED}x</div>
+              <div class="level-info">QUANTUM THRUSTERS RECALIBRATED -> INTERCEPTOR VELOCITY: ${DISPLAY_SHIP_SPEED}x</div>
           `;
           
           showPopup(`LEVEL ${level}`, popupHTML, () => {
              ship.x = W/2; ship.y = H/2; ship.invuln=2;
              spawnLevelLogic();
              gameState = 'PLAYING';
+             // Re-apply cursor when play resumes
+             gameWrap.classList.add('aiming-cursor'); 
           });
         }
       }
     } catch(e) {
       console.error("Game Loop Error:", e);
+      // Remove custom cursor on error
+      gameWrap.classList.remove('aiming-cursor'); 
       showEndScreen();
     }
   }
@@ -1070,9 +1097,11 @@
       e.preventDefault();
       
       const touch = e.changedTouches[0];
-      joyTouchId = touch.identifier;
-      
-      // We don't need to check for multi-touch fire here; that's handled by fireBtn
+      // Only track the first touch that starts within the joystick area
+      const rect = joystick.getBoundingClientRect();
+      if(touch.clientX > rect.left && touch.clientX < rect.right && touch.clientY > rect.top && touch.clientY < rect.bottom) {
+          joyTouchId = touch.identifier;
+      }
   };
 
   const handleTouchMove = (e) => {
