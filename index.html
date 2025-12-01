@@ -461,8 +461,10 @@
         if(input.right) this.angle += 4.5 * dt;
       }
 
-      // Thrust
-      if(input.thrust){
+      // 🔄 MOBILE THRUST FIX APPLIED HERE
+      const isThrusting = input.thrust || (touchAim !== null);
+      
+      if(isThrusting){
         const force = 240 * dt * shipSpeedMultiplier;
         this.vel.x += Math.cos(this.angle) * force;
         this.vel.y += Math.sin(this.angle) * force;
@@ -961,32 +963,51 @@
   window.addEventListener('mousedown', ()=>mouse.down=true);
   window.addEventListener('mouseup', ()=>mouse.down=false);
 
+  // 🚀 FIXED MOBILE TOUCH LISTENERS
   canvas.addEventListener('touchstart', e=>{
     e.preventDefault();
     for(let t of e.changedTouches){
-      if(!touchAim) touchAim = {id:t.identifier, x:t.clientX, y:t.clientY};
-      else { input.fire=true; if(e.touches.length>1) autoFire=true; }
+      // 1. If touchAim is NOT set, or if the current touch is the primary one, 
+      // set/update the touchAim (this handles movement/thrust)
+      if(!touchAim || (touchAim && t.identifier === touchAim.id)) {
+          touchAim = {id:t.identifier, x:t.clientX, y:t.clientY};
+      }
+      // 2. If it's a second touch, treat it as a trigger (fire)
+      else if (touchAim && t.identifier !== touchAim.id) {
+          input.fire = true;
+          autoFire = true; 
+      }
     }
   }, {passive:false});
+  
   canvas.addEventListener('touchmove', e=>{
     e.preventDefault();
     for(let t of e.changedTouches){
-      if(touchAim && t.identifier===touchAim.id){ touchAim.x=t.clientX; t.y=t.clientY; }
+      if(touchAim && t.identifier===touchAim.id){ 
+          touchAim.x=t.clientX; 
+          touchAim.y=t.clientY; // Fix: ensure y-coordinate is also updated
+      }
     }
   }, {passive:false});
+  
   canvas.addEventListener('touchend', e=>{
     e.preventDefault();
     for(let t of e.changedTouches){
-      if(touchAim && t.identifier===touchAim.id) touchAim=null;
-      else input.fire=false;
+      if(touchAim && t.identifier===touchAim.id) {
+          touchAim=null; // Stop movement/thrust
+      }
+      else {
+          input.fire=false;
+          autoFire=false; // Stop autofire if the second touch is released
+      }
     }
   }, {passive:false});
+  // ------------------------------------
   
   fireBtn.addEventListener('touchstart', (e)=>{e.preventDefault(); input.fire=true;});
   fireBtn.addEventListener('touchend', (e)=>{e.preventDefault(); input.fire=false;});
   fireBtn.addEventListener('mousedown', ()=>{input.fire=true;});
   fireBtn.addEventListener('mouseup', ()=>{input.fire=false;});
-
 
   // --- UI Event Handlers ---
   startBtn.addEventListener('click', startGame);
