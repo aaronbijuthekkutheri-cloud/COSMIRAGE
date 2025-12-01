@@ -10,6 +10,8 @@
     --neon2: #8b5cf6; /* Purple */
     --neon3: #ff6bcb; /* Pink - Best Score */
     --error: #ff4d4d; /* Red - Error/Reset */
+    --fire-color: #ff9900; /* New Orange Fire Color */
+    --joystick-color: #cccccc; /* New Grey Joystick Color */
     --bg-color: #050b14;
     font-family: 'Courier New', Courier, monospace; 
   }
@@ -100,7 +102,7 @@
     text-shadow: 0 0 5px var(--neon3);
   }
   
-  /* NEW BEST MESSAGE STYLES - Ensure it displays as a block */
+  /* NEW BEST MESSAGE STYLES */
   #newBestMsg {
     margin: 10px 0; /* Add margin around the new line */
     font-size: 24px;
@@ -290,16 +292,25 @@
   .heart { transition: 0.5s; }
   .heart.fade { opacity: 0; transform: scale(2); filter:grayscale(1); }
 
-  /* MOBILE FIRE BUTTON (RIGHT SIDE) */
+  /* MOBILE FIRE BUTTON (RIGHT SIDE) - UPDATED TO ORANGE/TEXT */
   #fireBtn {
     position: absolute; right:24px; bottom:34px; width:84px; height:84px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center; pointer-events:auto;
-    border: 2px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05);
+    display:flex; flex-direction: column; align-items:center; justify-content:center; pointer-events:auto;
+    border: 2px solid var(--fire-color); background:rgba(255,153,0,0.2); /* Semi-transparent orange background */
     display:none; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     z-index: 8;
+    color: white; 
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px var(--fire-color);
   }
   #fireBtn.visible{display:flex;}
-  #fireBtn:active{background:rgba(255,255,255,0.2); border-color:var(--neon1); box-shadow:0 0 20px var(--neon1);}
+  #fireBtn:active{background:rgba(255,153,0,0.5); border-color:white; box-shadow:0 0 20px var(--fire-color);}
+  
+  /* The small inner circle is removed and replaced by text, so we only need the outer button. 
+     The content of fireBtn is now the word "FIRE".
+  */
   
   /* 🎮 NEW MOBILE JOYSTICK STYLES (LEFT SIDE) */
   #joystick {
@@ -321,8 +332,8 @@
       transform: translate(-50%, -50%);
       width: 60px; height: 60px;
       border-radius: 50%;
-      background: var(--neon1);
-      box-shadow: 0 0 10px var(--neon1);
+      background: var(--joystick-color); /* Updated to Grey */
+      box-shadow: 0 0 10px rgba(204, 204, 204, 0.5); /* Subtler glow */
       border: 3px solid rgba(0,0,0,0.5);
       cursor: grab;
       touch-action: none; /* Critical for touchmove */
@@ -399,7 +410,7 @@
     <button class="btn" id="endScreenRetryBtn"><span class="btn-text">RETRY MISSION</span></button>
   </div>
   
-  <div id="fireBtn"><div style="width:40px;height:40px;background:var(--neon1);border-radius:50%;box-shadow:0 0 10px var(--neon1);pointer-events:none;"></div></div>
+  <div id="fireBtn">FIRE</div>
   
   <div id="joystick">
     <div id="joyBase"></div>
@@ -424,7 +435,7 @@
   const endScreen = document.getElementById('endScreen'); 
   const endScoreVal = document.getElementById('endScoreVal');
   const endBestScoreVal = document.getElementById('endBestScoreVal');
-  const newBestMsg = document.getElementById('newBestMsg'); // Reference updated
+  const newBestMsg = document.getElementById('newBestMsg'); 
   const fireBtn = document.getElementById('fireBtn');
   
   // New UI Refs
@@ -492,6 +503,8 @@
       fireBtn.classList.remove('visible');
       // Reset mobile state if transitioning to desktop
       joyTouchId = null;
+      joyStick.style.left = '50%';
+      joyStick.style.top = '50%';
       joyStick.style.transform = `translate(-50%, -50%)`;
       input.thrust = false;
     }
@@ -910,9 +923,9 @@
     endScoreVal.textContent = score;
     endBestScoreVal.textContent = bestScore;
     
-    // 🏆 MODIFIED: Set visibility based on logic
+    // Set visibility of the "NEW BEST!" message
     newBestMsg.textContent = newBest ? 'NEW BEST!' : ''; 
-    newBestMsg.style.display = newBest ? 'block' : 'none'; // Ensure 'block' is used when active
+    newBestMsg.style.display = newBest ? 'block' : 'none'; 
 
     asteroids = [];
     for(let i=0; i<5; i++) asteroids.push(new Asteroid(rand(0,W), rand(0,H), 30, 0.4));
