@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Cosmirage — HTML5</title>
+  <title>Cosmirage</title>
   <style>
     :root {
       --neon1: #7ef2ea;
@@ -15,8 +15,18 @@
       /* Pink - Best Score */
       --error: #ff4d4d;
       /* Red - Error/Reset */
+      --fire-color: #ff9900;
+      /* New Orange Fire Color */
+      --joystick-color: #cccccc;
+      /* New Grey Joystick Color */
       --bg-color: #050b14;
       font-family: 'Courier New', Courier, monospace;
+    }
+
+    /* Disable all text shadows globally */
+
+    * {
+      text-shadow: none !important;
     }
 
     html,
@@ -37,6 +47,13 @@
       align-items: center;
       justify-content: center;
       background: #000;
+    }
+
+    /* --- AIMING CURSOR STYLE --- */
+    #gameWrap.aiming-cursor {
+      /* Create a small, cyan, persistent dot crosshair */
+      /* 1x1 transparent dot with a small cyan shadow/glow */
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewport='0 0 16 16'><circle cx='8' cy='8' r='2' fill='%237ef2ea' style='filter:drop-shadow(0 0 4px %237ef2ea)' /></svg>") 8 8, crosshair !important;
     }
 
     canvas {
@@ -172,6 +189,18 @@
       text-shadow: 0 0 5px var(--neon3);
     }
 
+    /* NEW BEST MESSAGE STYLES */
+    #newBestMsg {
+      margin: 10px 0;
+      /* Add margin around the new line */
+      font-size: 24px;
+      color: var(--neon3);
+      letter-spacing: 4px;
+      text-shadow: 0 0 5px var(--neon3), 0 0 15px var(--neon3);
+      display: block !important;
+      /* IMPORTANT: Force block display */
+    }
+
     /* Best Score */
     .best-score {
       margin-bottom: 40px;
@@ -239,7 +268,7 @@
     }
 
     .btn:hover .btn-text {
-      text-shadow: 0 0 5px #000, 0 0 10px #fff;
+      text-shadow: none;
     }
 
     /* Reset/Danger Button Variations */
@@ -411,7 +440,7 @@
       filter: grayscale(1);
     }
 
-    /* MOBILE CONTROLS */
+    /* MOBILE FIRE BUTTON (RIGHT SIDE) - UPDATED TO ORANGE/TEXT */
     #fireBtn {
       position: absolute;
       right: 24px;
@@ -420,15 +449,22 @@
       height: 84px;
       border-radius: 50%;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       pointer-events: auto;
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--fire-color);
+      background: rgba(255, 153, 0, 0.2);
+      /* Semi-transparent orange background */
       display: none;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       z-index: 8;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 5px var(--fire-color);
     }
 
     #fireBtn.visible {
@@ -436,43 +472,53 @@
     }
 
     #fireBtn:active {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: var(--neon1);
-      box-shadow: 0 0 20px var(--neon1);
+      background: rgba(255, 153, 0, 0.5);
+      border-color: white;
+      box-shadow: 0 0 20px var(--fire-color);
     }
 
-    #joystickBtn {
+    /* The small inner circle is removed and replaced by text, so we only need the outer button. 
+     The content of fireBtn is now the word "FIRE".
+  */
+
+    /* 🎮 NEW MOBILE JOYSTICK STYLES (LEFT SIDE) */
+    #joystick {
       position: absolute;
       left: 24px;
       bottom: 34px;
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: auto;
-      border: 3px solid rgba(139, 92, 246, 0.3);
-      background: rgba(139, 92, 246, 0.08);
+      width: 120px;
+      height: 120px;
       display: none;
-      touch-action: none;
-      -webkit-tap-highlight-color: transparent;
+      /* Default hidden on desktop */
+      pointer-events: auto;
       z-index: 8;
     }
 
-    #joystickBtn.visible {
-      display: flex;
+    #joyBase {
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
     }
 
-    #joystick {
-      width: 50px;
-      height: 50px;
+    #joyStick {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      /* Start in the center */
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: var(--neon2);
-      box-shadow: 0 0 15px var(--neon2);
-      pointer-events: none;
-      position: relative;
-      transition: transform 0.1s ease-out;
+      background: var(--joystick-color);
+      /* Updated to Grey */
+      box-shadow: 0 0 10px rgba(204, 204, 204, 0.5);
+      /* Subtler glow */
+      border: 3px solid rgba(0, 0, 0, 0.5);
+      cursor: grab;
+      touch-action: none;
+      /* Critical for touchmove */
     }
 
     @media (max-width:720px) {
@@ -534,6 +580,17 @@
       .popup-details-container h3 {
         font-size: 18px;
       }
+
+      #joystick {
+        display: block;
+      }
+
+      /* Show Analog Stick */
+      #fireBtn.visible {
+        display: flex;
+      }
+
+      /* Show Fire Button */
     }
   </style>
 </head>
@@ -575,28 +632,30 @@
 
       <div class="score-panel">
         <div>FINAL SCORE: <span class="final-score" id="endScoreVal">0</span></div>
+
+        <span id="newBestMsg" style="display:none;">
+          NEW BEST!
+        </span>
+
         <div>
-          <span id="newBestMsg" style="color:var(--neon3); display:none;">
-            NEW BEST!
-          </span>
           BEST SCORE: <span class="best-score-end" id="endBestScoreVal">0</span>
         </div>
       </div>
 
       <button class="btn" id="endScreenRetryBtn"><span class="btn-text">RETRY MISSION</span></button>
     </div>
-    <div id="fireBtn">
-      <div
-        style="width:40px;height:40px;background:var(--neon1);border-radius:50%;box-shadow:0 0 10px var(--neon1);pointer-events:none;">
-      </div>
-    </div>
-    <div id="joystickBtn">
-      <div id="joystick"></div>
+
+    <div id="fireBtn">FIRE</div>
+
+    <div id="joystick">
+      <div id="joyBase"></div>
+      <div id="joyStick"></div>
     </div>
   </div>
 
   <script>
     (() => {
+      const gameWrap = document.getElementById('gameWrap'); // Get gameWrap for cursor change
       const canvas = document.getElementById('c');
       const ctx = canvas.getContext('2d', { alpha: false });
 
@@ -614,8 +673,6 @@
       const endBestScoreVal = document.getElementById('endBestScoreVal');
       const newBestMsg = document.getElementById('newBestMsg');
       const fireBtn = document.getElementById('fireBtn');
-      const joystickBtn = document.getElementById('joystickBtn');
-      const joystick = document.getElementById('joystick');
 
       // New UI Refs
       const startBtn = document.getElementById('startBtn');
@@ -625,6 +682,13 @@
       const confirmResetBtn = document.getElementById('confirmResetBtn');
       const cancelResetBtn = document.getElementById('cancelResetBtn');
       const closePopupBtn = document.getElementById('closePopupBtn');
+
+      // 🎮 Joystick Refs
+      const joystick = document.getElementById('joystick');
+      const joyBase = document.getElementById('joyBase');
+      const joyStick = document.getElementById('joyStick');
+      const JOYSTICK_RADIUS = 60; // Half the width/height of #joystick container
+      const JOYSTICK_DEADZONE = 10; // Minimum drag distance to activate thrust
 
       // Game Vars
       let W, H;
@@ -640,14 +704,13 @@
       // Input
       let input = { left: false, right: false, thrust: false, fire: false };
       let mouse = { x: 0, y: 0, active: false, down: false };
-      let touchAim = null;
-      let autoFire = false;
 
       // Joystick State
-      let joystickActive = false;
-      let joystickTouchId = null;
-      let joystickCenter = { x: 0, y: 0 };
-      let joystickOffset = { x: 0, y: 0 };
+      let joyTouchId = null;
+      let joyAngle = -Math.PI / 2; // Ship's angle is set by this
+      let isMobile = false;
+
+      let autoFire = false;
 
       // Objects
       let ship = null;
@@ -668,12 +731,18 @@
         canvas.width = W;
         canvas.height = H;
         initStars();
-        if (W < 768) {
+        isMobile = W < 720;
+        if (isMobile) {
           fireBtn.classList.add('visible');
-          joystickBtn.classList.add('visible');
-        } else {
+        }
+        else {
           fireBtn.classList.remove('visible');
-          joystickBtn.classList.remove('visible');
+          // Reset mobile state if transitioning to desktop
+          joyTouchId = null;
+          joyStick.style.left = '50%';
+          joyStick.style.top = '50%';
+          joyStick.style.transform = `translate(-50%, -50%)`;
+          input.thrust = false;
         }
       }
       window.addEventListener('resize', resize);
@@ -699,27 +768,25 @@
           this.invuln = 0;
         }
         update(dt) {
-          // Aim - Priority: Joystick > Mouse > Touch > Keyboard
-          if (joystickActive && (Math.abs(joystickOffset.x) > 5 || Math.abs(joystickOffset.y) > 5)) {
-            // Use joystick for aiming
-            this.angle = Math.atan2(joystickOffset.y, joystickOffset.x);
-          } else {
-            let tx = mouse.active ? mouse.x : (touchAim ? touchAim.x : null);
-            let ty = mouse.active ? mouse.y : (touchAim ? touchAim.y : null);
 
-            if (tx !== null) {
-              this.angle = Math.atan2(ty - this.y, tx - this.x);
-            } else {
-              if (input.left) this.angle -= 4.5 * dt;
-              if (input.right) this.angle += 4.5 * dt;
-            }
+          // Aim / Rotation
+          let tx = mouse.active ? mouse.x : null;
+          let ty = mouse.active ? mouse.y : null;
+
+          if (isMobile) {
+            // Mobile: Analog stick sets the angle directly
+            this.angle = joyAngle;
+          } else if (tx !== null) {
+            // PC: Mouse aiming
+            this.angle = Math.atan2(ty - this.y, tx - this.x);
+          } else {
+            // PC: Keyboard rotation if no mouse
+            if (input.left) this.angle -= 4.5 * dt;
+            if (input.right) this.angle += 4.5 * dt;
           }
 
-          // Thrust - Check joystick distance or keyboard input
-          const joystickDistance = Math.hypot(joystickOffset.x, joystickOffset.y);
-          const shouldThrust = input.thrust || (joystickActive && joystickDistance > 15);
-
-          if (shouldThrust) {
+          // Thrust (Controlled by input.thrust, set by W/Up/Joystick)
+          if (input.thrust) {
             const force = 240 * dt * shipSpeedMultiplier;
             this.vel.x += Math.cos(this.angle) * force;
             this.vel.y += Math.sin(this.angle) * force;
@@ -997,6 +1064,9 @@
         scoreEl.textContent = 0; livesEl.textContent = 3;
         bullets = []; particles = [];
 
+        // Set custom cursor for aiming
+        gameWrap.classList.add('aiming-cursor');
+
         titleScreen.classList.add('hidden');
         endScreen.classList.add('hidden');
         hud.classList.add('active');
@@ -1085,7 +1155,8 @@
       // --- POPUP MENU FUNCTIONS ---
 
       function showAbout() {
-        // UPDATED: Now includes the Title with class popup-title-text
+        // Remove custom cursor when viewing menus
+        gameWrap.classList.remove('aiming-cursor');
         const content = `
         <div class="popup-title-text">ABOUT GAME</div>
         <div class="popup-details-container">
@@ -1116,6 +1187,8 @@
       }
 
       function showControls() {
+        // Remove custom cursor when viewing menus
+        gameWrap.classList.remove('aiming-cursor');
         const fullHTML = `
         <div class="popup-title-text">CONTROLS</div>
         <div class="popup-details-container">
@@ -1128,8 +1201,9 @@
 
             <h3>MOBILE CONTROLS</h3>
             <ul style="list-style:disc; margin-left:20px;">
-                <li class="level-info"><b>AIM & THRUST:</b> Use bottom-left Joystick.</li>
-                <li class="level-info"><b>FIRE:</b> Tap bottom-right button.</li>
+                <li class="level-info"><b>MOVEMENT & AIM:</b> Drag the analog stick (bottom-left) 360 degrees.</li>
+                <li class="level-info"><b>THRUST:</b> Drag the stick past a small threshold to activate engine.</li>
+                <li class="level-info"><b>FIRE:</b> Tap the circular button (bottom-right).</li>
             </ul>
         </div>
     `;
@@ -1147,10 +1221,14 @@
       function closeInfoPopup() {
         popupScreen.classList.add('hidden');
         titleScreen.classList.remove('hidden');
+        // Remove custom cursor when entering menu
+        gameWrap.classList.remove('aiming-cursor');
         gameState = 'MENU';
       }
 
       function showResetConfirm() {
+        // Remove custom cursor when resetting data
+        gameWrap.classList.remove('aiming-cursor');
         titleScreen.classList.add('hidden');
         showPopup(
           "WARNING: DATA ERASE",
@@ -1182,6 +1260,9 @@
         gameState = 'ENDSCREEN';
         hud.classList.remove('active');
 
+        // Remove custom cursor when game ends
+        gameWrap.classList.remove('aiming-cursor');
+
         const newBest = score > bestScore;
         if (newBest) {
           bestScore = score;
@@ -1191,8 +1272,10 @@
 
         endScoreVal.textContent = score;
         endBestScoreVal.textContent = bestScore;
-        newBestMsg.innerHTML = newBest ? 'NEW BEST!' : '';
-        newBestMsg.style.display = newBest ? 'inline' : 'none';
+
+        // Set visibility of the "NEW BEST!" message
+        newBestMsg.textContent = newBest ? 'NEW BEST!' : '';
+        newBestMsg.style.display = newBest ? 'block' : 'none';
 
         asteroids = [];
         for (let i = 0; i < 5; i++) asteroids.push(new Asteroid(rand(0, W), rand(0, H), 30, 0.4));
@@ -1272,7 +1355,7 @@
               }
             }
 
-            // Level Clear
+            // Level Clear Check
             if (asteroids.length === 0) {
               level++;
               bullets = [];
@@ -1280,141 +1363,140 @@
               gameState = 'TRANSITION';
 
               const { count, speedMult, shipMult } = getLevelParameters(level);
+              const DISPLAY_ASTEROID_SPEED = speedMult.toFixed(2);
+              const DISPLAY_SHIP_SPEED = shipMult.toFixed(2);
 
               const popupHTML = `
               <div class="level-info">ASTEROIDS: ${count}</div>
-              <div class="level-info">ASTEROID VELOCITY: ${speedMult.toFixed(2)}x</div>
-              <div class="level-info">QUANTUM THRUSTERS RECALIBRATED -> INTERCEPTOR VELOCITY: ${shipMult.toFixed(2)}x</div>
+              <div class="level-info">ASTEROID VELOCITY: ${DISPLAY_ASTEROID_SPEED}x</div>
+              <div class="level-info">QUANTUM THRUSTERS RECALIBRATED -> INTERCEPTOR VELOCITY: ${DISPLAY_SHIP_SPEED}x</div>
           `;
 
               showPopup(`LEVEL ${level}`, popupHTML, () => {
                 ship.x = W / 2; ship.y = H / 2; ship.invuln = 2;
                 spawnLevelLogic();
                 gameState = 'PLAYING';
+                // Re-apply cursor when play resumes
+                gameWrap.classList.add('aiming-cursor');
               });
             }
           }
         } catch (e) {
           console.error("Game Loop Error:", e);
+          // Remove custom cursor on error
+          gameWrap.classList.remove('aiming-cursor');
           showEndScreen();
         }
       }
 
       // --- Inputs ---
       const k = (key, state, event) => {
-        if (key === 'ArrowUp' || key === 'KeyW') input.thrust = state;
-        if (key === 'ArrowLeft' || key === 'KeyA') input.left = state;
-        if (key === 'ArrowRight' || key === 'KeyD') input.right = state;
+        // PC Controls (Keyboard)
+        if (!isMobile) {
+          if (key === 'ArrowUp' || key === 'KeyW') input.thrust = state;
+          if (key === 'ArrowLeft' || key === 'KeyA') input.left = state;
+          if (key === 'ArrowRight' || key === 'KeyD') input.right = state;
 
-        if (key === 'Space') {
-          input.fire = state;
-          if (event && state) event.preventDefault();
+          if (key === 'Space') {
+            input.fire = state;
+            if (event && state) event.preventDefault();
+          }
         }
       };
 
       window.addEventListener('keydown', e => k(e.code, true, e));
       window.addEventListener('keyup', e => k(e.code, false, e));
 
+      // PC Mouse Controls
       window.addEventListener('mousemove', e => { mouse.active = true; mouse.x = e.clientX; mouse.y = e.clientY; });
       window.addEventListener('mousedown', () => mouse.down = true);
       window.addEventListener('mouseup', () => mouse.down = false);
 
-      canvas.addEventListener('touchstart', e => {
-        e.preventDefault();
-        for (let t of e.changedTouches) {
-          if (!touchAim) touchAim = { id: t.identifier, x: t.clientX, y: t.clientY };
-          else { input.fire = true; if (e.touches.length > 1) autoFire = true; }
-        }
-      }, { passive: false });
-      canvas.addEventListener('touchmove', e => {
-        e.preventDefault();
-        for (let t of e.changedTouches) {
-          if (touchAim && t.identifier === touchAim.id) { touchAim.x = t.clientX; t.y = t.clientY; }
-        }
-      }, { passive: false });
-      canvas.addEventListener('touchend', e => {
-        e.preventDefault();
-        for (let t of e.changedTouches) {
-          if (touchAim && t.identifier === touchAim.id) touchAim = null;
-          else input.fire = false;
-        }
-      }, { passive: false });
+      // 🎮 ANALOG STICK LOGIC
+      const getJoystickCenter = () => {
+        const rect = joyBase.getBoundingClientRect();
+        return {
+          x: rect.left + JOYSTICK_RADIUS,
+          y: rect.top + JOYSTICK_RADIUS
+        };
+      };
 
-      fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); input.fire = true; });
-      fireBtn.addEventListener('touchend', (e) => { e.preventDefault(); input.fire = false; });
-      fireBtn.addEventListener('mousedown', () => { input.fire = true; });
-      fireBtn.addEventListener('mouseup', () => { input.fire = false; });
-
-      // --- Joystick Event Handlers ---
-      joystickBtn.addEventListener('touchstart', (e) => {
+      const handleTouchStart = (e) => {
+        if (!isMobile) return;
         e.preventDefault();
+
         const touch = e.changedTouches[0];
-        joystickTouchId = touch.identifier;
-        joystickActive = true;
-
-        const rect = joystickBtn.getBoundingClientRect();
-        joystickCenter.x = rect.left + rect.width / 2;
-        joystickCenter.y = rect.top + rect.height / 2;
-
-        const offsetX = touch.clientX - joystickCenter.x;
-        const offsetY = touch.clientY - joystickCenter.y;
-
-        // Limit joystick movement to button radius
-        const maxRadius = 30;
-        const distance = Math.hypot(offsetX, offsetY);
-        if (distance > maxRadius) {
-          const angle = Math.atan2(offsetY, offsetX);
-          joystickOffset.x = Math.cos(angle) * maxRadius;
-          joystickOffset.y = Math.sin(angle) * maxRadius;
-        } else {
-          joystickOffset.x = offsetX;
-          joystickOffset.y = offsetY;
+        // Only track the first touch that starts within the joystick area
+        const rect = joystick.getBoundingClientRect();
+        if (touch.clientX > rect.left && touch.clientX < rect.right && touch.clientY > rect.top && touch.clientY < rect.bottom) {
+          joyTouchId = touch.identifier;
         }
+      };
 
-        joystick.style.transform = `translate(${joystickOffset.x}px, ${joystickOffset.y}px)`;
-      }, { passive: false });
+      const handleTouchMove = (e) => {
+        if (!isMobile) return;
 
-      joystickBtn.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (!joystickActive) return;
+        for (let t of e.changedTouches) {
+          if (t.identifier === joyTouchId) {
+            e.preventDefault();
+            const center = getJoystickCenter();
+            const dx = t.clientX - center.x;
+            const dy = t.clientY - center.y;
+            let dist = Math.hypot(dx, dy);
 
-        for (let touch of e.changedTouches) {
-          if (touch.identifier === joystickTouchId) {
-            const offsetX = touch.clientX - joystickCenter.x;
-            const offsetY = touch.clientY - joystickCenter.y;
-
-            // Limit joystick movement to button radius
-            const maxRadius = 30;
-            const distance = Math.hypot(offsetX, offsetY);
-            if (distance > maxRadius) {
-              const angle = Math.atan2(offsetY, offsetX);
-              joystickOffset.x = Math.cos(angle) * maxRadius;
-              joystickOffset.y = Math.sin(angle) * maxRadius;
+            // Clamp stick position to radius
+            if (dist > JOYSTICK_RADIUS) {
+              const ratio = JOYSTICK_RADIUS / dist;
+              dist = JOYSTICK_RADIUS;
+              joyStick.style.left = `${dx * ratio + JOYSTICK_RADIUS}px`;
+              joyStick.style.top = `${dy * ratio + JOYSTICK_RADIUS}px`;
             } else {
-              joystickOffset.x = offsetX;
-              joystickOffset.y = offsetY;
+              joyStick.style.left = `${t.clientX - center.x + JOYSTICK_RADIUS}px`;
+              joyStick.style.top = `${t.clientY - center.y + JOYSTICK_RADIUS}px`;
             }
 
-            joystick.style.transform = `translate(${joystickOffset.x}px, ${joystickOffset.y}px)`;
-            break;
+            // Set Ship Angle
+            joyAngle = Math.atan2(dy, dx);
+
+            // Set Ship Thrust
+            if (dist > JOYSTICK_DEADZONE) {
+              input.thrust = true;
+            } else {
+              input.thrust = false;
+            }
+            return;
           }
         }
-      }, { passive: false });
+      };
 
-      joystickBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        for (let touch of e.changedTouches) {
-          if (touch.identifier === joystickTouchId) {
-            joystickActive = false;
-            joystickTouchId = null;
-            joystickOffset.x = 0;
-            joystickOffset.y = 0;
-            joystick.style.transform = 'translate(0px, 0px)';
-            break;
+      const handleTouchEnd = (e) => {
+        if (!isMobile) return;
+        for (let t of e.changedTouches) {
+          if (t.identifier === joyTouchId) {
+            e.preventDefault();
+            joyTouchId = null;
+            input.thrust = false;
+
+            // Reset stick to center using CSS translation
+            joyStick.style.left = '50%';
+            joyStick.style.top = '50%';
+            joyStick.style.transform = `translate(-50%, -50%)`;
+            return;
           }
         }
-      }, { passive: false });
+      };
 
+      // Attach listeners to the joystick base/container
+      joystick.addEventListener('touchstart', handleTouchStart, { passive: false });
+      window.addEventListener('touchmove', handleTouchMove, { passive: false }); // Use window for moves outside the stick zone
+      window.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+
+      // Fire Button (Right Side)
+      fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); input.fire = true; autoFire = true; }, { passive: false });
+      fireBtn.addEventListener('touchend', (e) => { e.preventDefault(); input.fire = false; autoFire = false; }, { passive: false });
+      fireBtn.addEventListener('mousedown', () => { input.fire = true; });
+      fireBtn.addEventListener('mouseup', () => { input.fire = false; });
 
       // --- UI Event Handlers ---
       startBtn.addEventListener('click', startGame);
