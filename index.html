@@ -1,158 +1,1445 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>Cosmirage</title>
-<style>
-:root{
---neon1: #7ef2ea; /* Cyan - Main Color */
---neon2: #8b5cf6; /* Purple */
---neon3: #ff6bcb; /* Pink - Best Score */
---error: #ff4d4d; /* Red - Error/Reset */
---fire-color: #ff9900; /* New Orange Fire Color */
---joystick-color: #cccccc; /* New Grey Joystick Color */
---bg-color: #050b14;
-font-family: 'Courier New', Courier, monospace; 
-}
-/* Disable all text shadows globally */
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Cosmirage — HTML5</title>
+  <style>
+    :root {
+      --neon1: #7ef2ea;
+      /* Cyan - Main Color */
+      --neon2: #8b5cf6;
+      /* Purple */
+      --neon3: #ff6bcb;
+      /* Pink - Best Score */
+      --error: #ff4d4d;
+      /* Red - Error/Reset */
+      --bg-color: #050b14;
+      font-family: 'Courier New', Courier, monospace;
+    }
 
-* { text-shadow: none !important; }
-html,body{height:100%;margin:0;background:var(--bg-color);overflow:hidden;user-select:none;-webkit-user-select:none;color:#e6fbff;}
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg-color);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      color: #e6fbff;
+    }
 
-#gameWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
+    #gameWrap {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
 
-  /* --- AIMING CURSOR STYLE --- */
-  #gameWrap.aiming-cursor {
-    /* Create a small, cyan, persistent dot crosshair */
-    /* 1x1 transparent dot with a small cyan shadow/glow */
-    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewport='0 0 16 16'><circle cx='8' cy='8' r='2' fill='%237ef2ea' style='filter:drop-shadow(0 0 4px %237ef2ea)' /></svg>") 8 8, crosshair !important;
-  }
-  
-canvas{
-display:block;
-background: radial-gradient(circle at center, #111 0%, #000 100%);
-@@ -416,10 +423,11 @@
-<div id="joyBase"></div>
-<div id="joyStick"></div>
-</div>
+    canvas {
+      display: block;
+      background: radial-gradient(circle at center, #111 0%, #000 100%);
+    }
+
+    /* HUD */
+    .ui-hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 5;
+    }
+
+    .ui-hud.active {
+      opacity: 1;
+    }
+
+    .hud-panel {
+      text-shadow: 0 0 10px var(--neon2);
+      font-size: 20px;
+    }
+
+    /* OVERLAYS */
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 10;
+      transition: 0.3s;
+      pointer-events: auto;
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* TITLE */
+    h1.title {
+      font-size: 56px;
+      margin: 0 0 20px 0;
+      color: #fff;
+      text-shadow: 0 0 10px var(--neon1), 0 0 20px var(--neon1), 0 0 40px var(--neon2);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      animation: flicker 4s infinite;
+      text-align: center;
+    }
+
+    @keyframes flicker {
+
+      0%,
+      19.9%,
+      22%,
+      62.9%,
+      64%,
+      64.9%,
+      70%,
+      100% {
+        opacity: 1;
+      }
+
+      20%,
+      21.9%,
+      63%,
+      63.9%,
+      65%,
+      69.9% {
+        opacity: 0.4;
+      }
+    }
+
+    /* Glitch Text for End Screen */
+    .glitch-text {
+      font-size: 50px;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 0 10px var(--neon3), 0 0 20px var(--neon2);
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+
+    .glitch-sub-text {
+      font-size: 28px;
+      color: var(--neon1);
+      margin-bottom: 30px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px var(--neon1);
+      animation: flicker 5s infinite;
+      display: block;
+      margin-top: 5px;
+    }
+
+    /* Score Panel */
+    .score-panel {
+      text-align: center;
+      margin: 30px 0;
+      font-size: 22px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    .score-panel div {
+      margin: 10px 0;
+    }
+
+    .score-panel .final-score {
+      font-size: 32px;
+      color: var(--neon1);
+      text-shadow: 0 0 10px var(--neon1);
+    }
+
+    .score-panel .best-score-end {
+      color: var(--neon3);
+      text-shadow: 0 0 5px var(--neon3);
+    }
+
+    /* Best Score */
+    .best-score {
+      margin-bottom: 40px;
+      color: var(--neon3);
+      font-size: 24px;
+      letter-spacing: 4px;
+      text-shadow: 0 0 5px var(--neon3), 0 0 15px var(--neon3), 0 0 25px rgba(255, 107, 203, 0.7);
+    }
+
+    /* * FUTURISTIC BUTTON STYLES * */
+    .btn {
+      position: relative;
+      background: transparent;
+      border: none;
+      color: var(--neon1);
+      padding: 18px 45px;
+      font-size: 18px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin: 12px;
+      transition: 0.2s;
+      clip-path: polygon(0% 50%, 10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%);
+      box-shadow: 0 0 5px rgba(126, 242, 234, 0.5);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--neon1);
+      z-index: -2;
+      transition: 0.2s;
+      clip-path: polygon(0% 50%, 10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%);
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: -1;
+      clip-path: polygon(0% 50%, 10.5% 3px, 89.5% 3px, 100% 50%, 89.5% calc(100% - 3px), 10.5% calc(100% - 3px));
+      transition: 0.2s;
+    }
+
+    .btn-text {
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 8px var(--neon1);
+      display: inline-block;
+    }
+
+    .btn:hover {
+      color: #000;
+      transform: scale(1.05);
+      text-shadow: none;
+      box-shadow: 0 0 40px var(--neon1);
+    }
+
+    .btn:hover::after {
+      background: var(--neon1);
+    }
+
+    .btn:hover .btn-text {
+      text-shadow: 0 0 5px #000, 0 0 10px #fff;
+    }
+
+    /* Reset/Danger Button Variations */
+    .btn-reset {
+      font-size: 16px;
+      padding: 12px 30px;
+      margin-top: 30px;
+      opacity: 0.9;
+      color: var(--error);
+      box-shadow: 0 0 5px rgba(255, 77, 77, 0.5);
+    }
+
+    .btn-reset::before {
+      background: var(--error);
+    }
+
+    .btn-reset .btn-text {
+      text-shadow: 0 0 8px var(--error);
+    }
+
+    .btn-reset:hover {
+      color: #fff;
+      box-shadow: 0 0 30px var(--error);
+      opacity: 1;
+    }
+
+    .btn-reset:hover::after {
+      background: var(--error);
+    }
+
+    .btn-reset:hover .btn-text {
+      color: #fff;
+    }
+
+    #popupButtons {
+      display: flex;
+      gap: 20px;
+      margin-top: 30px;
+      justify-content: center;
+    }
+
+    #confirmResetBtn {
+      color: var(--error);
+      padding: 16px 30px;
+      font-size: 16px;
+    }
+
+    #confirmResetBtn::before {
+      background: var(--error);
+    }
+
+    #confirmResetBtn .btn-text {
+      text-shadow: 0 0 8px var(--error);
+    }
+
+    #confirmResetBtn:hover::after {
+      background: var(--error);
+    }
+
+    #confirmResetBtn:hover {
+      color: #fff;
+      box-shadow: 0 0 20px var(--error);
+    }
+
+    #confirmResetBtn:hover .btn-text {
+      color: #fff;
+    }
+
+    #cancelResetBtn {
+      padding: 16px 30px;
+      font-size: 16px;
+      color: var(--neon1);
+    }
+
+    /* --- FIX: Ensure Cancel button text is visible on hover --- */
+    #cancelResetBtn:hover {
+      color: #000;
+      /* Force text color black */
+    }
+
+    #cancelResetBtn:hover .btn-text {
+      text-shadow: none;
+      /* Remove text shadow for better clarity on light background */
+    }
+
+    /* --------------------------------------------------------- */
+
+    /* POPUP TEXT STYLES */
+    .popup-msg {
+      font-size: 42px;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 0 20px var(--neon2);
+      font-weight: bold;
+    }
+
+    /* --- NEW CLASS FOR ABOUT/CONTROLS TITLES --- */
+    .popup-title-text {
+      font-size: 36px;
+      color: #fff;
+      text-shadow: 0 0 10px var(--neon1), 0 0 20px var(--neon1);
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      letter-spacing: 4px;
+      font-weight: bold;
+      text-transform: uppercase;
+      animation: flicker 5s infinite;
+    }
+
+    .sub-msg {
+      font-size: 24px;
+      margin-top: 15px;
+      color: var(--neon1);
+      opacity: 1;
+      letter-spacing: 5px;
+      text-align: center;
+      text-shadow: 0 0 5px var(--neon1), 0 0 15px rgba(126, 242, 234, 0.7);
+    }
+
+    .sub-msg:empty {
+      display: none;
+      margin-top: 0;
+    }
+
+    /* INFO / DETAILS STYLES */
+    .popup-details-container {
+      text-align: left;
+      max-width: 600px;
+      padding: 10px 20px 30px 20px;
+    }
+
+    .popup-details-container h3 {
+      color: var(--neon2);
+      text-shadow: 0 0 10px var(--neon2);
+      text-transform: uppercase;
+      margin-top: 20px;
+      font-size: 22px;
+      letter-spacing: 3px;
+      border-bottom: 1px solid rgba(139, 92, 246, 0.5);
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .level-info {
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      margin: 8px 0;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    .heart-container {
+      font-size: 40px;
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .heart {
+      transition: 0.5s;
+    }
+
+    .heart.fade {
+      opacity: 0;
+      transform: scale(2);
+      filter: grayscale(1);
+    }
+
+    /* MOBILE CONTROLS */
+    #fireBtn {
+      position: absolute;
+      right: 24px;
+      bottom: 34px;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      display: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 8;
+    }
+
+    #fireBtn.visible {
+      display: flex;
+    }
+
+    #fireBtn:active {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: var(--neon1);
+      box-shadow: 0 0 20px var(--neon1);
+    }
+
+    #joystickBtn {
+      position: absolute;
+      left: 24px;
+      bottom: 34px;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      border: 3px solid rgba(139, 92, 246, 0.3);
+      background: rgba(139, 92, 246, 0.08);
+      display: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 8;
+    }
+
+    #joystickBtn.visible {
+      display: flex;
+    }
+
+    #joystick {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--neon2);
+      box-shadow: 0 0 15px var(--neon2);
+      pointer-events: none;
+      position: relative;
+      transition: transform 0.1s ease-out;
+    }
+
+    @media (max-width:720px) {
+      h1.title {
+        font-size: 36px;
+      }
+
+      .glitch-text {
+        font-size: 30px;
+      }
+
+      .score-panel .final-score {
+        font-size: 24px;
+      }
+
+      .ui-hud {
+        font-size: 16px;
+      }
+
+      .popup-msg {
+        font-size: 32px;
+      }
+
+      .popup-title-text {
+        font-size: 26px;
+        margin-top: 20px;
+      }
+
+      .sub-msg {
+        font-size: 18px;
+      }
+
+      .best-score {
+        font-size: 18px;
+      }
+
+      .level-info {
+        font-size: 14px;
+      }
+
+      .btn {
+        padding: 12px 25px;
+        font-size: 14px;
+        letter-spacing: 2px;
+      }
+
+      .btn-reset,
+      #confirmResetBtn,
+      #cancelResetBtn {
+        font-size: 14px;
+        padding: 10px 20px;
+      }
+
+      .popup-details-container {
+        max-width: 90%;
+        padding: 10px 10px 20px 10px;
+      }
+
+      .popup-details-container h3 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="gameWrap">
+    <canvas id="c"></canvas>
+
+    <div class="ui-hud" id="hud">
+      <div class="hud-panel">SCORE: <span id="scoreVal">0</span></div>
+      <div class="hud-panel">LIVES: <span id="livesVal">3</span></div>
+    </div>
+
+    <div class="overlay-screen" id="titleScreen">
+      <h1 class="title">COSMIRAGE</h1>
+      <div class="best-score">BEST SCORE: <span id="bestScoreVal">0</span></div>
+
+      <button class="btn" id="startBtn"><span class="btn-text">START MISSION</span></button>
+      <button class="btn" id="aboutBtn"><span class="btn-text">ABOUT</span></button>
+      <button class="btn" id="controlsBtn"><span class="btn-text">CONTROLS</span></button>
+      <button class="btn btn-reset" id="resetDataBtn"><span class="btn-text">RESET DATA</span></button>
+    </div>
+
+    <div class="overlay-screen hidden" id="popupScreen">
+      <div id="popupContent"></div>
+      <div id="popupButtons" class="hidden">
+        <button class="btn" id="confirmResetBtn"><span class="btn-text">CONFIRM ERASE</span></button>
+        <button class="btn" id="cancelResetBtn"><span class="btn-text">CANCEL</span></button>
+        <button class="btn" id="closePopupBtn" style="display:none;"><span class="btn-text">CLOSE</span></button>
+      </div>
+    </div>
+
+    <div class="overlay-screen hidden" id="endScreen">
+      <div class="glitch-text">
+        SYSTEM SHUTDOWN<br>
+        <span class="glitch-sub-text">REALITY COULD NOT HOLD</span>
+      </div>
+
+      <div class="score-panel">
+        <div>FINAL SCORE: <span class="final-score" id="endScoreVal">0</span></div>
+        <div>
+          <span id="newBestMsg" style="color:var(--neon3); display:none;">
+            NEW BEST!
+          </span>
+          BEST SCORE: <span class="best-score-end" id="endBestScoreVal">0</span>
+        </div>
+      </div>
+
+      <button class="btn" id="endScreenRetryBtn"><span class="btn-text">RETRY MISSION</span></button>
+    </div>
+    <div id="fireBtn">
+      <div
+        style="width:40px;height:40px;background:var(--neon1);border-radius:50%;box-shadow:0 0 10px var(--neon1);pointer-events:none;">
+      </div>
+    </div>
+    <div id="joystickBtn">
+      <div id="joystick"></div>
+    </div>
   </div>
-</div>
 
-<script>
-(() => {
-  const gameWrap = document.getElementById('gameWrap'); // Get gameWrap for cursor change
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d', { alpha: false }); 
+  <script>
+    (() => {
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d', { alpha: false });
 
-@@ -727,6 +735,9 @@
-scoreEl.textContent = 0; livesEl.textContent = 3;
-bullets = []; particles = [];
+      // UI Refs
+      const titleScreen = document.getElementById('titleScreen');
+      const popupScreen = document.getElementById('popupScreen');
+      const popupContent = document.getElementById('popupContent');
+      const popupButtons = document.getElementById('popupButtons');
+      const hud = document.getElementById('hud');
+      const scoreEl = document.getElementById('scoreVal');
+      const livesEl = document.getElementById('livesVal');
+      const bestScoreEl = document.getElementById('bestScoreVal');
+      const endScreen = document.getElementById('endScreen');
+      const endScoreVal = document.getElementById('endScoreVal');
+      const endBestScoreVal = document.getElementById('endBestScoreVal');
+      const newBestMsg = document.getElementById('newBestMsg');
+      const fireBtn = document.getElementById('fireBtn');
+      const joystickBtn = document.getElementById('joystickBtn');
+      const joystick = document.getElementById('joystick');
 
-    // Set custom cursor for aiming
-    gameWrap.classList.add('aiming-cursor');
+      // New UI Refs
+      const startBtn = document.getElementById('startBtn');
+      const aboutBtn = document.getElementById('aboutBtn');
+      const controlsBtn = document.getElementById('controlsBtn');
+      const resetDataBtn = document.getElementById('resetDataBtn');
+      const confirmResetBtn = document.getElementById('confirmResetBtn');
+      const cancelResetBtn = document.getElementById('cancelResetBtn');
+      const closePopupBtn = document.getElementById('closePopupBtn');
 
-titleScreen.classList.add('hidden');
-endScreen.classList.add('hidden');
-hud.classList.add('active');
-@@ -815,7 +826,8 @@
-// --- POPUP MENU FUNCTIONS ---
+      // Game Vars
+      let W, H;
+      let gameState = 'MENU';
+      let lastTime = 0;
+      let score = 0, level = 1, lives = 3;
+      let shipSpeedMultiplier = 1;
 
-function showAbout(){
-    // UPDATED: Now includes the Title with class popup-title-text
-    // Remove custom cursor when viewing menus
-    gameWrap.classList.remove('aiming-cursor');
-const content = `
-       <div class="popup-title-text">ABOUT GAME</div>
-       <div class="popup-details-container">
-@@ -846,6 +858,8 @@
-}
+      const STORAGE_KEY = 'cosmirage_best';
+      let bestScore = parseInt(localStorage.getItem(STORAGE_KEY) || 0);
+      bestScoreEl.textContent = bestScore;
 
-function showControls(){
-    // Remove custom cursor when viewing menus
-    gameWrap.classList.remove('aiming-cursor');
-const fullHTML = `
-       <div class="popup-title-text">CONTROLS</div>
-       <div class="popup-details-container">
-@@ -878,10 +892,14 @@
-function closeInfoPopup(){
-popupScreen.classList.add('hidden');
-titleScreen.classList.remove('hidden');
-      // Remove custom cursor when entering menu
-      gameWrap.classList.remove('aiming-cursor');
-gameState = 'MENU';
-}
+      // Input
+      let input = { left: false, right: false, thrust: false, fire: false };
+      let mouse = { x: 0, y: 0, active: false, down: false };
+      let touchAim = null;
+      let autoFire = false;
 
-function showResetConfirm(){
-    // Remove custom cursor when resetting data
-    gameWrap.classList.remove('aiming-cursor');
-titleScreen.classList.add('hidden');
-showPopup(
-"WARNING: DATA ERASE", 
-@@ -913,6 +931,9 @@
-gameState = 'ENDSCREEN';
-hud.classList.remove('active');
+      // Joystick State
+      let joystickActive = false;
+      let joystickTouchId = null;
+      let joystickCenter = { x: 0, y: 0 };
+      let joystickOffset = { x: 0, y: 0 };
 
-    // Remove custom cursor when game ends
-    gameWrap.classList.remove('aiming-cursor');
-    
-const newBest = score > bestScore;
-if(newBest){
-bestScore = score;
-@@ -1004,31 +1025,37 @@
-return; 
-}
-}
+      // Objects
+      let ship = null;
+      let bullets = [];
+      let asteroids = [];
+      let particles = [];
+      let stars = [];
 
-        // Level Clear
-        
-        // Level Clear Check
-if(asteroids.length === 0){
-level++; 
-bullets = [];
+      const MAX_PARTICLES = 120;
 
-gameState = 'TRANSITION'; 
+      // --- Helpers ---
+      const rand = (min, max) => Math.random() * (max - min) + min;
+      const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-const { count, speedMult, shipMult } = getLevelParameters(level);
-          const DISPLAY_ASTEROID_SPEED = speedMult.toFixed(2);
-          const DISPLAY_SHIP_SPEED = shipMult.toFixed(2);
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
+        initStars();
+        if (W < 768) {
+          fireBtn.classList.add('visible');
+          joystickBtn.classList.add('visible');
+        } else {
+          fireBtn.classList.remove('visible');
+          joystickBtn.classList.remove('visible');
+        }
+      }
+      window.addEventListener('resize', resize);
 
-const popupHTML = `
-             <div class="level-info">ASTEROIDS: ${count}</div>
+      function initStars() {
+        stars = [];
+        for (let i = 0; i < 60; i++) {
+          stars.push({
+            x: rand(0, W), y: rand(0, H),
+            size: rand(0.5, 2),
+            speed: rand(0.2, 0.8)
+          });
+        }
+      }
+
+      // --- Classes ---
+      class Ship {
+        constructor() {
+          this.x = W / 2; this.y = H / 2; this.r = 14;
+          this.angle = -Math.PI / 2;
+          this.vel = { x: 0, y: 0 };
+          this.cool = 0;
+          this.invuln = 0;
+        }
+        update(dt) {
+          // Aim - Priority: Joystick > Mouse > Touch > Keyboard
+          if (joystickActive && (Math.abs(joystickOffset.x) > 5 || Math.abs(joystickOffset.y) > 5)) {
+            // Use joystick for aiming
+            this.angle = Math.atan2(joystickOffset.y, joystickOffset.x);
+          } else {
+            let tx = mouse.active ? mouse.x : (touchAim ? touchAim.x : null);
+            let ty = mouse.active ? mouse.y : (touchAim ? touchAim.y : null);
+
+            if (tx !== null) {
+              this.angle = Math.atan2(ty - this.y, tx - this.x);
+            } else {
+              if (input.left) this.angle -= 4.5 * dt;
+              if (input.right) this.angle += 4.5 * dt;
+            }
+          }
+
+          // Thrust - Check joystick distance or keyboard input
+          const joystickDistance = Math.hypot(joystickOffset.x, joystickOffset.y);
+          const shouldThrust = input.thrust || (joystickActive && joystickDistance > 15);
+
+          if (shouldThrust) {
+            const force = 240 * dt * shipSpeedMultiplier;
+            this.vel.x += Math.cos(this.angle) * force;
+            this.vel.y += Math.sin(this.angle) * force;
+
+            // Neon Fire Boost
+            if (particles.length < MAX_PARTICLES && Math.random() > 0.3) {
+              const rx = this.x - Math.cos(this.angle) * 12;
+              const ry = this.y - Math.sin(this.angle) * 12;
+              spawnFire(rx, ry, this.angle + Math.PI);
+            }
+          }
+
+          // Physics
+          this.vel.x *= 0.97; this.vel.y *= 0.97;
+          this.x += this.vel.x * dt; this.y += this.vel.y * dt;
+
+          // Wrap
+          if (this.x < -15) this.x = W + 15; if (this.x > W + 15) this.x = -15;
+          if (this.y < -15) this.y = H + 15; if (this.y > H + 15) this.y = -15;
+
+          if (this.cool > 0) this.cool -= dt;
+          if (this.invuln > 0) this.invuln -= dt;
+        }
+        draw(ctx) {
+          if (this.invuln > 0 && Math.floor(Date.now() / 100) % 2 === 0) return;
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.angle);
+
+          // Fighter Jet Glow Effect
+          ctx.shadowBlur = 20; ctx.shadowColor = '#7ef2ea';
+
+          // Engine exhaust glow (back of jet)
+          const exhaustGlow = ctx.createRadialGradient(-18, 0, 0, -18, 0, 12);
+          exhaustGlow.addColorStop(0, 'rgba(126, 242, 234, 0.8)');
+          exhaustGlow.addColorStop(0.5, 'rgba(139, 92, 246, 0.4)');
+          exhaustGlow.addColorStop(1, 'rgba(139, 92, 246, 0)');
+          ctx.fillStyle = exhaustGlow;
+          ctx.beginPath();
+          ctx.ellipse(-18, 0, 8, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Main fuselage (sleek body)
+          ctx.fillStyle = '#1a1a2e';
+          ctx.strokeStyle = '#7ef2ea';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(20, 0);          // Sharp nose tip
+          ctx.lineTo(10, -3);         // Upper nose
+          ctx.lineTo(-5, -4);         // Upper fuselage
+          ctx.lineTo(-14, -3);        // Rear upper
+          ctx.lineTo(-16, 0);         // Rear center
+          ctx.lineTo(-14, 3);         // Rear lower
+          ctx.lineTo(-5, 4);          // Lower fuselage
+          ctx.lineTo(10, 3);          // Lower nose
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Top swept wing
+          ctx.shadowColor = '#8b5cf6';
+          ctx.fillStyle = '#0d0d1a';
+          ctx.strokeStyle = '#8b5cf6';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-2, -4);         // Wing root front
+          ctx.lineTo(-12, -16);       // Wing tip
+          ctx.lineTo(-14, -14);       // Wing tip back edge
+          ctx.lineTo(-10, -4);        // Wing root back
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Bottom swept wing
+          ctx.beginPath();
+          ctx.moveTo(-2, 4);          // Wing root front
+          ctx.lineTo(-12, 16);        // Wing tip
+          ctx.lineTo(-14, 14);        // Wing tip back edge
+          ctx.lineTo(-10, 4);         // Wing root back
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Top tail fin (vertical stabilizer)
+          ctx.fillStyle = '#0d0d1a';
+          ctx.strokeStyle = '#ff6bcb';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(-10, -3);
+          ctx.lineTo(-16, -9);
+          ctx.lineTo(-18, -8);
+          ctx.lineTo(-14, -3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Bottom tail fin
+          ctx.beginPath();
+          ctx.moveTo(-10, 3);
+          ctx.lineTo(-16, 9);
+          ctx.lineTo(-18, 8);
+          ctx.lineTo(-14, 3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Cockpit canopy (glass effect)
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#7ef2ea';
+          const canopyGrad = ctx.createLinearGradient(4, -2, 10, 2);
+          canopyGrad.addColorStop(0, 'rgba(126, 242, 234, 0.6)');
+          canopyGrad.addColorStop(0.5, 'rgba(126, 242, 234, 0.9)');
+          canopyGrad.addColorStop(1, 'rgba(126, 242, 234, 0.4)');
+          ctx.fillStyle = canopyGrad;
+          ctx.beginPath();
+          ctx.moveTo(14, 0);          // Front
+          ctx.lineTo(6, -2.5);        // Upper back
+          ctx.lineTo(6, 2.5);         // Lower back
+          ctx.closePath();
+          ctx.fill();
+
+          // Cockpit frame line
+          ctx.strokeStyle = '#7ef2ea';
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(6, -2.5);
+          ctx.lineTo(6, 2.5);
+          ctx.stroke();
+
+          // Nose cone highlight
+          ctx.shadowBlur = 5;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(18, 0);
+          ctx.lineTo(12, -1.5);
+          ctx.stroke();
+
+          // Engine intake details
+          ctx.fillStyle = '#7ef2ea';
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.ellipse(-15, 0, 2, 1.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      class Bullet {
+        constructor(x, y, ang) {
+          this.x = x; this.y = y;
+          const speed = 600;
+          this.vx = Math.cos(ang) * speed;
+          this.vy = Math.sin(ang) * speed;
+          this.life = 1.0;
+        }
+        update(dt) {
+          this.x += this.vx * dt; this.y += this.vy * dt;
+          this.life -= dt;
+          if (this.x < 0) this.x = W; if (this.x > W) this.x = 0;
+          if (this.y < 0) this.y = H; if (this.y > H) this.y = 0;
+        }
+        draw(ctx) {
+          ctx.shadowBlur = 8; ctx.shadowColor = '#7ef2ea';
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      class Asteroid {
+        constructor(x, y, r, spdMult) {
+          this.x = x; this.y = y; this.r = r;
+          this.spdMult = spdMult;
+          const a = rand(0, Math.PI * 2);
+          const s = rand(50, 120) * spdMult;
+          this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s;
+          this.ang = 0; this.spin = rand(-2, 2);
+          this.shape = [];
+          for (let i = 0; i < 9; i++) this.shape.push(r * rand(0.7, 1.1));
+        }
+        update(dt) {
+          this.x += this.vx * dt; this.y += this.vy * dt;
+          this.ang += this.spin * dt;
+          if (this.x < -30) this.x = W + 30; else if (this.x > W + 30) this.x = -30;
+          if (this.y < -30) this.y = H + 30; else if (this.y > H + 30) this.y = -30;
+        }
+        draw(ctx) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.ang);
+          ctx.shadowBlur = 10; ctx.shadowColor = '#8b5cf6';
+          ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          const step = (Math.PI * 2) / this.shape.length;
+          this.shape.forEach((r, i) => {
+            const x = Math.cos(i * step) * r;
+            const y = Math.sin(i * step) * r;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      class Particle {
+        constructor(x, y, vx, vy, life, color, type) {
+          this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+          this.life = life; this.maxLife = life; this.color = color; this.type = type;
+        }
+        update(dt) {
+          this.x += this.vx * dt; this.y += this.vy * dt;
+          this.life -= dt;
+          this.vx *= 0.95; this.vy *= 0.95;
+        }
+        draw(ctx) {
+          const a = Math.max(0, this.life / this.maxLife);
+          ctx.globalAlpha = a;
+          ctx.fillStyle = this.color;
+          if (this.type === 'fire') {
+            const hue = Math.floor(60 * a);
+            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+          }
+          ctx.beginPath(); ctx.arc(this.x, this.y, 2.5 * a, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // --- Logic ---
+
+      function spawnFire(x, y, dir) {
+        const s = rand(0, 0.5);
+        const spd = rand(50, 150);
+        const vx = Math.cos(dir + s) * spd;
+        const vy = Math.sin(dir + s) * spd;
+        particles.push(new Particle(x, y, vx, vy, rand(0.3, 0.6), '#fff', 'fire'));
+      }
+
+      function spawnExplosion(x, y) {
+        for (let i = 0; i < 16; i++) {
+          const a = rand(0, Math.PI * 2);
+          const s = rand(80, 250);
+          particles.push(new Particle(x, y, Math.cos(a) * s, Math.sin(a) * s, rand(0.5, 0.9), '#7ef2ea', 'spark'));
+        }
+      }
+
+      function getLevelParameters(currentLevel) {
+        const count = Math.ceil(3 + currentLevel * 2.0);
+        const speedMult = 1 + currentLevel * 0.15;
+        const shipMult = 1 + currentLevel * 0.1;
+        return { count, speedMult, shipMult };
+      }
+
+      function spawnLevelLogic() {
+        asteroids = [];
+        const { count, speedMult, shipMult } = getLevelParameters(level);
+        shipSpeedMultiplier = shipMult;
+
+        let attempts = 0;
+        for (let i = 0; i < count; i++) {
+          let ax, ay, d;
+          do {
+            ax = rand(0, W); ay = rand(0, H);
+            d = dist({ x: ax, y: ay }, { x: W / 2, y: H / 2 });
+            attempts++;
+          } while (d < 150 && attempts < 100);
+
+          asteroids.push(new Asteroid(ax, ay, rand(20, 45), speedMult));
+        }
+      }
+
+      function startGame() {
+        score = 0; level = 1; lives = 3;
+        scoreEl.textContent = 0; livesEl.textContent = 3;
+        bullets = []; particles = [];
+
+        titleScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        hud.classList.add('active');
+
+        const { count, speedMult, shipMult } = getLevelParameters(level);
+        const DISPLAY_ASTEROID_SPEED = (level === 1) ? '1.00' : speedMult.toFixed(2);
+        const DISPLAY_SHIP_SPEED = (level === 1) ? '1.00' : shipMult.toFixed(2);
+
+        const popupHTML = `
+        <div class="level-info">ASTEROIDS: ${count}</div>
+        <div class="level-info">ASTEROID VELOCITY: ${DISPLAY_ASTEROID_SPEED}x</div>
+        <div class="level-info" style="margin-top:20px; color:var(--neon1)">INTERCEPTOR VELOCITY: ${DISPLAY_SHIP_SPEED}x</div>
+    `;
+
+        showPopup(`LEVEL ${level}`, popupHTML, () => {
+          spawnLevelLogic();
+          ship = new Ship();
+          ship.invuln = 2;
+          gameState = 'PLAYING';
+        });
+      }
+
+      function showPopup(main, sub, cb, requiresButtons = false, requiresCloseBtn = false) {
+        gameState = 'TRANSITION';
+        titleScreen.classList.add('hidden');
+
+        popupContent.innerHTML = `<div class="popup-msg">${main}</div><div class="sub-msg">${sub}</div>`;
+        popupScreen.classList.remove('hidden');
+
+        popupButtons.classList.remove('hidden');
+        confirmResetBtn.style.display = 'none';
+        cancelResetBtn.style.display = 'none';
+        closePopupBtn.style.display = 'none';
+
+        if (requiresButtons) {
+          confirmResetBtn.style.display = 'inline-block';
+          cancelResetBtn.style.display = 'inline-block';
+        } else if (requiresCloseBtn) {
+          closePopupBtn.style.display = 'inline-block';
+        } else {
+          popupButtons.classList.add('hidden');
+          setTimeout(() => {
+            popupScreen.classList.add('hidden');
+            if (cb) cb();
+          }, 4000);
+        }
+      }
+
+      function showLifeLost(remLives, cb) {
+        gameState = 'TRANSITION';
+        let h = "";
+        for (let i = 0; i < remLives; i++) h += "❤️";
+        h += `<span id="badHeart">💔</span>`;
+
+        let lifeText;
+        if (remLives === 1) lifeText = 'There is one life left.';
+        else if (remLives > 1) lifeText = `There are ${remLives} lives left.`;
+        else lifeText = 'NO LIVES REMAIN';
+
+        popupContent.innerHTML = `
+      <div class="popup-msg" style="color:#ff4d4d">CRITICAL HIT</div>
+      <div class="heart-container">${h}</div>
+      <div class="sub-msg" style="letter-spacing:2px; font-size:22px;">${lifeText}</div>
+    `;
+        popupScreen.classList.remove('hidden');
+        popupButtons.classList.add('hidden');
+
+        setTimeout(() => {
+          const el = document.getElementById('badHeart');
+          if (el) el.classList.add('fade');
+        }, 1000);
+
+        setTimeout(() => {
+          popupScreen.classList.add('hidden');
+          if (remLives > 0) {
+            ship = new Ship();
+            ship.invuln = 3;
+            bullets = [];
+            particles = [];
+          }
+          if (cb) cb();
+          gameState = 'PLAYING';
+        }, 4000);
+      }
+
+      // --- POPUP MENU FUNCTIONS ---
+
+      function showAbout() {
+        // UPDATED: Now includes the Title with class popup-title-text
+        const content = `
+        <div class="popup-title-text">ABOUT GAME</div>
+        <div class="popup-details-container">
+            <h3>OBJECTIVE</h3>
+            <p class="level-info">Pilot the <b>Interceptor</b> to destroy all hostile <b>Asteroids</b> in each level. Destroying Asteroids increases your score.</p>
+            
+            <h3>LIVES & DEFEAT</h3>
+            <p class="level-info">You start with 3 Lives. Colliding with an asteroid causes a Critical Hit. Losing all lives results in <b>System Shutdown</b>.</p>
+
+            <h3>DIFFICULTY SCALING</h3>
+            <p class="level-info">Each level increases:</p>
+            <ul style="list-style:disc; margin-left:20px; color:#fff;">
+                <li class="level-info">Asteroid Count (+2)</li>
+                <li class="level-info">Asteroid Velocity (+15%)</li>
+                <li class="level-info">Interceptor Velocity (+10%)</li>
+            </ul>
+        </div>
+    `;
+        gameState = 'TRANSITION';
+        titleScreen.classList.add('hidden');
+        popupContent.innerHTML = content;
+        popupScreen.classList.remove('hidden');
+
+        popupButtons.classList.remove('hidden');
+        closePopupBtn.style.display = 'inline-block';
+        confirmResetBtn.style.display = 'none';
+        cancelResetBtn.style.display = 'none';
+      }
+
+      function showControls() {
+        const fullHTML = `
+        <div class="popup-title-text">CONTROLS</div>
+        <div class="popup-details-container">
+            <h3>PC CONTROLS</h3>
+            <ul style="list-style:disc; margin-left:20px;">
+                <li class="level-info"><b>AIM:</b> Mouse Cursor.</li>
+                <li class="level-info"><b>THRUST:</b> W or Up Arrow.</li>
+                <li class="level-info"><b>FIRE:</b> Spacebar or Click.</li>
+            </ul>
+
+            <h3>MOBILE CONTROLS</h3>
+            <ul style="list-style:disc; margin-left:20px;">
+                <li class="level-info"><b>AIM & THRUST:</b> Use bottom-left Joystick.</li>
+                <li class="level-info"><b>FIRE:</b> Tap bottom-right button.</li>
+            </ul>
+        </div>
+    `;
+        gameState = 'TRANSITION';
+        titleScreen.classList.add('hidden');
+        popupContent.innerHTML = fullHTML;
+        popupScreen.classList.remove('hidden');
+
+        popupButtons.classList.remove('hidden');
+        closePopupBtn.style.display = 'inline-block';
+        confirmResetBtn.style.display = 'none';
+        cancelResetBtn.style.display = 'none';
+      }
+
+      function closeInfoPopup() {
+        popupScreen.classList.add('hidden');
+        titleScreen.classList.remove('hidden');
+        gameState = 'MENU';
+      }
+
+      function showResetConfirm() {
+        titleScreen.classList.add('hidden');
+        showPopup(
+          "WARNING: DATA ERASE",
+          "PERMANENTLY DELETE BEST SCORE?<br>THIS ACTION CANNOT BE UNDONE.",
+          null,
+          true,
+          false
+        );
+      }
+
+      function performReset() {
+        localStorage.removeItem(STORAGE_KEY);
+        bestScore = 0;
+        bestScoreEl.textContent = "0";
+        popupScreen.classList.add('hidden');
+        popupButtons.classList.add('hidden');
+        titleScreen.classList.remove('hidden');
+        gameState = 'MENU';
+      }
+
+      function cancelReset() {
+        popupScreen.classList.add('hidden');
+        popupButtons.classList.add('hidden');
+        titleScreen.classList.remove('hidden');
+        gameState = 'MENU';
+      }
+
+      function showEndScreen() {
+        gameState = 'ENDSCREEN';
+        hud.classList.remove('active');
+
+        const newBest = score > bestScore;
+        if (newBest) {
+          bestScore = score;
+          localStorage.setItem(STORAGE_KEY, bestScore);
+          bestScoreEl.textContent = bestScore;
+        }
+
+        endScoreVal.textContent = score;
+        endBestScoreVal.textContent = bestScore;
+        newBestMsg.innerHTML = newBest ? 'NEW BEST!' : '';
+        newBestMsg.style.display = newBest ? 'inline' : 'none';
+
+        asteroids = [];
+        for (let i = 0; i < 5; i++) asteroids.push(new Asteroid(rand(0, W), rand(0, H), 30, 0.4));
+
+        endScreen.classList.remove('hidden');
+      }
+
+      function loop(now) {
+        try {
+          requestAnimationFrame(loop);
+          const dt = Math.min((now - lastTime) / 1000, 0.05);
+          lastTime = now;
+
+          // Clear & Starfield
+          ctx.fillStyle = '#050b14';
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.fillStyle = '#fff';
+          stars.forEach(s => {
+            s.y += s.speed;
+            if (s.y > H) { s.y = 0; s.x = rand(0, W); }
+            ctx.fillRect(s.x, s.y, s.size, s.size);
+          });
+
+          // Update Particles
+          particles = particles.filter(p => p.life > 0);
+          particles.forEach(p => { p.update(dt); p.draw(ctx); });
+
+          if (gameState === 'MENU' || gameState === 'ENDSCREEN' || (gameState === 'TRANSITION' && popupButtons.classList.contains('hidden'))) {
+            asteroids.forEach(a => { a.update(dt); a.draw(ctx); });
+          }
+
+          if (gameState === 'PLAYING') {
+            if (input.fire || mouse.down || autoFire) {
+              if (ship.cool <= 0) {
+                bullets.push(new Bullet(ship.x + Math.cos(ship.angle) * 15, ship.y + Math.sin(ship.angle) * 15, ship.angle));
+                ship.cool = 0.18;
+              }
+            }
+            ship.update(dt);
+            ship.draw(ctx);
+
+            bullets = bullets.filter(b => b.life > 0);
+            bullets.forEach(b => { b.update(dt); b.draw(ctx); });
+
+            asteroids.forEach(a => { a.update(dt); a.draw(ctx); });
+
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+              let a = asteroids[i];
+              for (let j = bullets.length - 1; j >= 0; j--) {
+                if (dist(a, bullets[j]) < a.r) {
+                  bullets.splice(j, 1);
+
+                  score += 10;
+                  scoreEl.textContent = score;
+
+                  if (a.r > 20) {
+                    asteroids.push(new Asteroid(a.x, a.y, a.r / 2, a.spdMult));
+                    asteroids.push(new Asteroid(a.x, a.y, a.r / 2, a.spdMult));
+                  }
+                  asteroids.splice(i, 1);
+                  break;
+                }
+              }
+
+              if (ship.invuln <= 0 && dist(ship, a) < ship.r + a.r - 4) {
+                spawnExplosion(ship.x, ship.y);
+                lives--;
+                livesEl.textContent = lives;
+
+                if (lives <= 0) {
+                  showEndScreen();
+                } else {
+                  showLifeLost(lives, () => { });
+                }
+                return;
+              }
+            }
+
+            // Level Clear
+            if (asteroids.length === 0) {
+              level++;
+              bullets = [];
+
+              gameState = 'TRANSITION';
+
+              const { count, speedMult, shipMult } = getLevelParameters(level);
+
+              const popupHTML = `
+              <div class="level-info">ASTEROIDS: ${count}</div>
               <div class="level-info">ASTEROID VELOCITY: ${speedMult.toFixed(2)}x</div>
               <div class="level-info">QUANTUM THRUSTERS RECALIBRATED -> INTERCEPTOR VELOCITY: ${shipMult.toFixed(2)}x</div>
-              <div class="level-info">ASTEROID VELOCITY: ${DISPLAY_ASTEROID_SPEED}x</div>
-              <div class="level-info">QUANTUM THRUSTERS RECALIBRATED -> INTERCEPTOR VELOCITY: ${DISPLAY_SHIP_SPEED}x</div>
-         `;
+          `;
 
-showPopup(`LEVEL ${level}`, popupHTML, () => {
-ship.x = W/2; ship.y = H/2; ship.invuln=2;
-spawnLevelLogic();
-gameState = 'PLAYING';
-             // Re-apply cursor when play resumes
-             gameWrap.classList.add('aiming-cursor'); 
-});
-}
-}
-} catch(e) {
-console.error("Game Loop Error:", e);
-      // Remove custom cursor on error
-      gameWrap.classList.remove('aiming-cursor'); 
-showEndScreen();
-}
-}
-@@ -1070,9 +1097,11 @@
-e.preventDefault();
-
-const touch = e.changedTouches[0];
-      joyTouchId = touch.identifier;
-      
-      // We don't need to check for multi-touch fire here; that's handled by fireBtn
-      // Only track the first touch that starts within the joystick area
-      const rect = joystick.getBoundingClientRect();
-      if(touch.clientX > rect.left && touch.clientX < rect.right && touch.clientY > rect.top && touch.clientY < rect.bottom) {
-          joyTouchId = touch.identifier;
+              showPopup(`LEVEL ${level}`, popupHTML, () => {
+                ship.x = W / 2; ship.y = H / 2; ship.invuln = 2;
+                spawnLevelLogic();
+                gameState = 'PLAYING';
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Game Loop Error:", e);
+          showEndScreen();
+        }
       }
-};
 
-const handleTouchMove = (e) => {
+      // --- Inputs ---
+      const k = (key, state, event) => {
+        if (key === 'ArrowUp' || key === 'KeyW') input.thrust = state;
+        if (key === 'ArrowLeft' || key === 'KeyA') input.left = state;
+        if (key === 'ArrowRight' || key === 'KeyD') input.right = state;
+
+        if (key === 'Space') {
+          input.fire = state;
+          if (event && state) event.preventDefault();
+        }
+      };
+
+      window.addEventListener('keydown', e => k(e.code, true, e));
+      window.addEventListener('keyup', e => k(e.code, false, e));
+
+      window.addEventListener('mousemove', e => { mouse.active = true; mouse.x = e.clientX; mouse.y = e.clientY; });
+      window.addEventListener('mousedown', () => mouse.down = true);
+      window.addEventListener('mouseup', () => mouse.down = false);
+
+      canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        for (let t of e.changedTouches) {
+          if (!touchAim) touchAim = { id: t.identifier, x: t.clientX, y: t.clientY };
+          else { input.fire = true; if (e.touches.length > 1) autoFire = true; }
+        }
+      }, { passive: false });
+      canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        for (let t of e.changedTouches) {
+          if (touchAim && t.identifier === touchAim.id) { touchAim.x = t.clientX; t.y = t.clientY; }
+        }
+      }, { passive: false });
+      canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        for (let t of e.changedTouches) {
+          if (touchAim && t.identifier === touchAim.id) touchAim = null;
+          else input.fire = false;
+        }
+      }, { passive: false });
+
+      fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); input.fire = true; });
+      fireBtn.addEventListener('touchend', (e) => { e.preventDefault(); input.fire = false; });
+      fireBtn.addEventListener('mousedown', () => { input.fire = true; });
+      fireBtn.addEventListener('mouseup', () => { input.fire = false; });
+
+      // --- Joystick Event Handlers ---
+      joystickBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        joystickActive = true;
+
+        const rect = joystickBtn.getBoundingClientRect();
+        joystickCenter.x = rect.left + rect.width / 2;
+        joystickCenter.y = rect.top + rect.height / 2;
+
+        const offsetX = touch.clientX - joystickCenter.x;
+        const offsetY = touch.clientY - joystickCenter.y;
+
+        // Limit joystick movement to button radius
+        const maxRadius = 30;
+        const distance = Math.hypot(offsetX, offsetY);
+        if (distance > maxRadius) {
+          const angle = Math.atan2(offsetY, offsetX);
+          joystickOffset.x = Math.cos(angle) * maxRadius;
+          joystickOffset.y = Math.sin(angle) * maxRadius;
+        } else {
+          joystickOffset.x = offsetX;
+          joystickOffset.y = offsetY;
+        }
+
+        joystick.style.transform = `translate(${joystickOffset.x}px, ${joystickOffset.y}px)`;
+      }, { passive: false });
+
+      joystickBtn.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!joystickActive) return;
+
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === joystickTouchId) {
+            const offsetX = touch.clientX - joystickCenter.x;
+            const offsetY = touch.clientY - joystickCenter.y;
+
+            // Limit joystick movement to button radius
+            const maxRadius = 30;
+            const distance = Math.hypot(offsetX, offsetY);
+            if (distance > maxRadius) {
+              const angle = Math.atan2(offsetY, offsetX);
+              joystickOffset.x = Math.cos(angle) * maxRadius;
+              joystickOffset.y = Math.sin(angle) * maxRadius;
+            } else {
+              joystickOffset.x = offsetX;
+              joystickOffset.y = offsetY;
+            }
+
+            joystick.style.transform = `translate(${joystickOffset.x}px, ${joystickOffset.y}px)`;
+            break;
+          }
+        }
+      }, { passive: false });
+
+      joystickBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === joystickTouchId) {
+            joystickActive = false;
+            joystickTouchId = null;
+            joystickOffset.x = 0;
+            joystickOffset.y = 0;
+            joystick.style.transform = 'translate(0px, 0px)';
+            break;
+          }
+        }
+      }, { passive: false });
+
+
+      // --- UI Event Handlers ---
+      startBtn.addEventListener('click', startGame);
+      resetDataBtn.addEventListener('click', showResetConfirm);
+      confirmResetBtn.addEventListener('click', performReset);
+      cancelResetBtn.addEventListener('click', cancelReset);
+
+      aboutBtn.addEventListener('click', showAbout);
+      controlsBtn.addEventListener('click', showControls);
+      closePopupBtn.addEventListener('click', closeInfoPopup);
+
+      document.getElementById('endScreenRetryBtn').addEventListener('click', () => {
+        endScreen.classList.add('hidden');
+        asteroids = [];
+        for (let i = 0; i < 5; i++) asteroids.push(new Asteroid(rand(0, W), rand(0, H), 30, 0.4));
+        gameState = 'MENU';
+        titleScreen.classList.remove('hidden');
+      });
+
+
+      resize();
+      requestAnimationFrame(loop);
+
+    })();
+  </script>
+</body>
+
+</html>
